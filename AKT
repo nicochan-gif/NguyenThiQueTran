@@ -1,1 +1,219 @@
-delete file
+--------------------------------------------------------------------------Bai1 tren lop
+import heapq
+
+GOAL = (
+    (1,2,3,4),
+    (5,6,7,8),
+    (9,10,11,12),
+    (13,14,15,0)
+)
+
+# heuristic Manhattan
+def h(state):
+    dist = 0
+    for i in range(4):
+        for j in range(4):
+            val = state[i][j]
+            if val != 0:
+                x = (val - 1) // 4
+                y = (val - 1) % 4
+                dist += abs(i - x) + abs(j - y)
+    return dist
+
+
+# tìm vị trí ô trống
+def find_zero(s):
+    for i in range(4):
+        for j in range(4):
+            if s[i][j] == 0:
+                return i, j
+
+
+# sinh trạng thái con
+def neighbors(s):
+    res = []
+    x, y = find_zero(s)
+
+    moves = [(-1,0),(1,0),(0,-1),(0,1)]
+
+    for dx, dy in moves:
+        nx, ny = x+dx, y+dy
+        if 0 <= nx < 4 and 0 <= ny < 4:
+            new_s = [list(row) for row in s]
+            new_s[x][y], new_s[nx][ny] = new_s[nx][ny], new_s[x][y]
+            res.append(tuple(tuple(row) for row in new_s))
+    return res
+
+
+# AKT (A*)
+def AKT(start):
+    OPEN = []
+    heapq.heappush(OPEN, (h(start), start))
+
+    CLOSED = set()
+
+    g = {start: 0}
+    parent = {start: None}
+
+    while OPEN:
+        f, current = heapq.heappop(OPEN)
+
+        if current == GOAL:
+            return trace(parent, current)
+
+        CLOSED.add(current)
+
+        for nxt in neighbors(current):
+            if nxt in CLOSED:
+                continue
+
+            new_g = g[current] + 1
+
+            if nxt not in g or new_g < g[nxt]:
+                g[nxt] = new_g
+                f = new_g + h(nxt)
+                heapq.heappush(OPEN, (f, nxt))
+                parent[nxt] = current
+
+    return None
+
+
+# truy vết lời giải
+def trace(parent, s):
+    path = []
+    while s:
+        path.append(s)
+        s = parent[s]
+    return path[::-1]
+
+
+# TEST 
+start = (
+    (1,2,3,4),
+    (5,6,0,8),
+    (9,10,7,11),
+    (13,14,15,12)
+)
+
+result = AKT(start)
+
+if result:
+    print("Số bước:", len(result)-1)
+    for step in result:
+        for row in step:
+            print(row)
+        print("------")
+else:
+    print("Không giải được")
+
+----------------------------------------------------Bai1 ve nha
+import heapq
+
+# tạo goal tự động
+def create_goal(n):
+    nums = list(range(1, n*n)) + [0]
+    return tuple(tuple(nums[i*n:(i+1)*n]) for i in range(n))
+
+
+# heuristic Manhattan tổng quát
+def h(state, goal_pos, n):
+    dist = 0
+    for i in range(n):
+        for j in range(n):
+            val = state[i][j]
+            if val != 0:
+                gx, gy = goal_pos[val]
+                dist += abs(i - gx) + abs(j - gy)
+    return dist
+
+
+# tìm vị trí 0
+def find_zero(state, n):
+    for i in range(n):
+        for j in range(n):
+            if state[i][j] == 0:
+                return i, j
+
+
+# sinh trạng thái mới
+def neighbors(state, n):
+    res = []
+    x, y = find_zero(state, n)
+
+    moves = [(-1,0),(1,0),(0,-1),(0,1)]
+
+    for dx, dy in moves:
+        nx, ny = x+dx, y+dy
+        if 0 <= nx < n and 0 <= ny < n:
+            new_s = [list(row) for row in state]
+            new_s[x][y], new_s[nx][ny] = new_s[nx][ny], new_s[x][y]
+            res.append(tuple(tuple(row) for row in new_s))
+    return res
+
+
+# AKT (A*)
+def AKT(start):
+    n = len(start)
+    goal = create_goal(n)
+
+    # map vị trí goal
+    goal_pos = {}
+    for i in range(n):
+        for j in range(n):
+            goal_pos[goal[i][j]] = (i, j)
+
+    OPEN = []
+    heapq.heappush(OPEN, (0, start))
+
+    CLOSED = set()
+
+    g = {start: 0}
+    parent = {start: None}
+
+    while OPEN:
+        f, current = heapq.heappop(OPEN)
+
+        if current == goal:
+            return trace(parent, current)
+
+        CLOSED.add(current)
+
+        for nxt in neighbors(current, n):
+            if nxt in CLOSED:
+                continue
+
+            new_g = g[current] + 1
+
+            if nxt not in g or new_g < g[nxt]:
+                g[nxt] = new_g
+                f = new_g + h(nxt, goal_pos, n)
+                heapq.heappush(OPEN, (f, nxt))
+                parent[nxt] = current
+
+    return None
+
+
+# truy vết
+def trace(parent, s):
+    path = []
+    while s:
+        path.append(s)
+        s = parent[s]
+    return path[::-1]
+
+
+# TEST
+
+start_4x4 = (
+    (1,2,3,4),
+    (5,6,0,8),
+    (9,10,7,11),
+    (13,14,15,12)
+)
+
+result = AKT(start_4x4)
+
+if result:
+    print("Số bước:", len(result)-1)
+else:
+    print("Không giải được")
