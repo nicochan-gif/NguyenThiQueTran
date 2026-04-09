@@ -1,4 +1,4 @@
-#bai2 tren lop
+---- tren lop
 class Graph:
     def __init__(self, adjac_list):
         self.adjac_list = adjac_list
@@ -84,3 +84,93 @@ adjac_list = {
 
 graph = Graph(adjac_list)
 graph.a_star('A', 'C')
+
+---Bai2 ve nha
+ import math
+
+class DeliveryGraph:
+    def __init__(self, graph, coordinates):
+        self.graph = graph
+        self.coordinates = coordinates
+
+    # Lấy hàng xóm
+    def get_neighbors(self, node):
+        return self.graph[node]
+
+    # Heuristic: khoảng cách Euclid
+    def h(self, n, goal):
+        x1, y1 = self.coordinates[n]
+        x2, y2 = self.coordinates[goal]
+        return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
+    # Thuật toán A*
+    def a_star(self, start, goal):
+        open_set = set([start])
+        closed_set = set()
+
+        g = {start: 0}
+        parent = {start: start}
+
+        while open_set:
+            # chọn node tốt nhất
+            n = min(open_set, key=lambda x: g[x] + self.h(x, goal))
+
+            # nếu tới đích
+            if n == goal:
+                path = []
+                while parent[n] != n:
+                    path.append(n)
+                    n = parent[n]
+                path.append(start)
+                path.reverse()
+
+                print("Đường giao hàng tối ưu:", path)
+                print("Tổng chi phí:", g[goal])
+                return path
+
+            # duyệt hàng xóm
+            for (m, weight) in self.get_neighbors(n):
+                if m not in open_set and m not in closed_set:
+                    open_set.add(m)
+                    parent[m] = n
+                    g[m] = g[n] + weight
+                else:
+                    if g[m] > g[n] + weight:
+                        g[m] = g[n] + weight
+                        parent[m] = n
+                        if m in closed_set:
+                            closed_set.remove(m)
+                            open_set.add(m)
+
+            open_set.remove(n)
+            closed_set.add(n)
+
+        print("Không tìm được đường giao hàng")
+        return None
+
+
+# DỮ LIỆU
+
+graph = {
+    'Kho': [('A', 2), ('B', 4)],
+    'A': [('C', 7), ('D', 3)],
+    'B': [('D', 4)],
+    'C': [('Khách', 1)],
+    'D': [('Khách', 5)],
+    'Khách': []
+}
+
+# Tọa độ (dùng tính heuristic)
+coordinates = {
+    'Kho': (0, 0),
+    'A': (2, 2),
+    'B': (2, -2),
+    'C': (5, 3),
+    'D': (6, 0),
+    'Khách': (8, 1)
+}
+
+delivery = DeliveryGraph(graph, coordinates)
+
+# chạy từ Kho → Khách
+delivery.a_star('Kho', 'Khách')
