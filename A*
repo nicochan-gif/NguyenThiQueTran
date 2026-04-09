@@ -1,4 +1,4 @@
----- tren lop
+-----------------Bai2 tren lop
 class Graph:
     def __init__(self, adjac_list):
         self.adjac_list = adjac_list
@@ -85,7 +85,7 @@ adjac_list = {
 graph = Graph(adjac_list)
 graph.a_star('A', 'C')
 
----Bai2 ve nha
+-----------------Bai2 ve nha
  import math
 
 class DeliveryGraph:
