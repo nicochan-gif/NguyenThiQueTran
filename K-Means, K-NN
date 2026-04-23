@@ -1,0 +1,198 @@
+----------------Bai tap tren lop
+#Bài 1. Cài đặt lại thuật toán k-means.
+import numpy as np
+
+def kmeans(X, k, max_iter=100):
+    # khởi tạo tâm cụm
+    centers = X[np.random.choice(len(X), k, replace=False)]
+
+    for _ in range(max_iter):
+        # tính khoảng cách
+        distances = np.linalg.norm(X[:, np.newaxis] - centers, axis=2)
+        labels = np.argmin(distances, axis=1)
+
+        # cập nhật tâm
+        new_centers = np.array([X[labels == i].mean(axis=0) for i in range(k)])
+
+        # kiểm tra hội tụ
+        if np.allclose(centers, new_centers):
+            break
+
+        centers = new_centers
+
+    return centers, labels
+
+#Bài 2. Cài đặt lại thuật toán k-NN với 2 cách đánh giá trọng số k.
+def knn_weighted(X_train, y_train, X_test, k):
+    predictions = []
+
+    for test in X_test:
+        distances = np.linalg.norm(X_train - test, axis=1)
+        idx = np.argsort(distances)[:k]
+
+        weights = {}
+        for i in idx:
+            label = y_train[i]
+            w = 1 / (distances[i] + 1e-5)  # tránh chia 0
+            weights[label] = weights.get(label, 0) + w
+
+        predictions.append(max(weights, key=weights.get))
+
+    return np.array(predictions)
+
+#Bài 3. Cài đặt ứng dụng demo cho 2 thuật toán trên.
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Hàm KNN cơ bản
+def knn_basic(X_train, y_train, X_test, k):
+    predictions = []
+    for test_point in X_test:
+        # Tính khoảng cách Euclidean đến tất cả các điểm huấn luyện
+        distances = np.linalg.norm(X_train - test_point, axis=1)
+        
+        # Lấy chỉ mục của k điểm gần nhất
+        k_nearest_indices = np.argsort(distances)[:k]
+        
+        # Lấy nhãn của k điểm gần nhất
+        k_nearest_labels = y_train[k_nearest_indices]
+        
+        # Thực hiện bỏ phiếu đa số để dự đoán nhãn
+        unique_labels, counts = np.unique(k_nearest_labels, return_counts=True)
+        predicted_label = unique_labels[np.argmax(counts)]
+        predictions.append(predicted_label)
+    return np.array(predictions)
+
+# tạo dữ liệu
+np.random.seed(0)
+X = np.random.rand(100, 2)
+
+# KMeans demo
+centers, labels = kmeans(X, 3)
+
+plt.scatter(X[:,0], X[:,1], c=labels)
+plt.scatter(centers[:,0], centers[:,1], c='red', s=200)
+plt.title("K-Means Demo")
+plt.show()
+
+
+# KNN demo
+y = np.random.randint(0, 2, 100)
+
+X_test = np.array([[0.5, 0.5]])
+
+print("KNN basic:", knn_basic(X, y, X_test, 5))
+print("KNN weighted:", knn_weighted(X, y, X_test, 5))
+
+--------------------Bài tập về nhà
+#Bài 4. Mô tả ứng dụng và cài đặt demo ứng dụng với 2 thuật toán trên.
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================== DỮ LIỆU ==================
+# dữ liệu khách hàng: [tuổi, thu nhập]
+customers = np.array([
+    [20, 30], [22, 35], [25, 40],
+    [50, 80], [55, 90], [60, 100]
+])
+
+# ================== K-MEANS ==================
+def kmeans(X, k, max_iter=100):
+    centers = X[np.random.choice(len(X), k, replace=False)]
+
+    for _ in range(max_iter):
+        # tính khoảng cách
+        distances = np.linalg.norm(X[:, None] - centers, axis=2)
+        labels = np.argmin(distances, axis=1)
+
+        # cập nhật tâm
+        new_centers = np.array([X[labels == i].mean(axis=0) for i in range(k)])
+
+        if np.allclose(centers, new_centers):
+            break
+
+        centers = new_centers
+
+    return centers, labels
+
+
+# chạy KMeans
+centers, labels = kmeans(customers, 2)
+
+print("=== K-MEANS ===")
+print("Centers:\n", centers)
+print("Labels:", labels)
+
+# vẽ biểu đồ
+plt.scatter(customers[:,0], customers[:,1], c=labels)
+plt.scatter(centers[:,0], centers[:,1], c='red', s=200)
+plt.xlabel("Tuổi")
+plt.ylabel("Thu nhập")
+plt.title("Phân cụm khách hàng - KMeans")
+plt.show()
+
+
+# ================== KNN ==================
+
+
+#  Voting có trọng số ---
+def knn_weighted(X_train, y_train, X_test, k):
+    preds = []
+
+    for test in X_test:
+        distances = np.linalg.norm(X_train - test, axis=1)
+        idx = np.argsort(distances)[:k]
+
+        weights = {}
+        for i in idx:
+            label = y_train[i]
+            w = 1 / (distances[i] + 1e-5)
+            weights[label] = weights.get(label, 0) + w
+
+        preds.append(max(weights, key=weights.get))
+
+    return preds
+
+
+# ================== DEMO KNN ==================
+
+# dùng kết quả KMeans làm nhãn
+X_train = customers
+y_train = labels
+
+# khách hàng mới
+new_customer = np.array([[30, 50]])
+
+print("\n=== KNN DỰ ĐOÁN ===")
+print("Khách hàng mới:", new_customer)
+
+print("KNN basic:", knn_basic(X_train, y_train, new_customer, 3))
+print("KNN weighted:", knn_weighted(X_train, y_train, new_customer, 3))
+
+#Bài 5. Mô tả ứng dụng và cài đặt demo ứng dụng với các thuật toán được học trên lớp lý thuyết.(A*)
+import heapq
+
+def astar(graph, start, goal):
+    open_set = [(0, start)]
+    g = {start: 0}
+    parent = {start: None}
+
+    while open_set:
+        _, node = heapq.heappop(open_set)
+
+        if node == goal:
+            path = []
+            while node:
+                path.append(node)
+                node = parent[node]
+            return path[::-1]
+
+        for neighbor, cost in graph[node]:
+            new_g = g[node] + cost
+            if neighbor not in g or new_g < g[neighbor]:
+                g[neighbor] = new_g
+                f = new_g
+                heapq.heappush(open_set, (f, neighbor))
+                parent[neighbor] = node
+
+    return None
